@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cashless v7.2 - Com Loteria (Admin Corrigido)</title>
+    <title>Cashless v7.3 - Configuração Firebase</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -164,21 +164,21 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, collection, addDoc, query, where, getDocs, arrayUnion, serverTimestamp, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // =======================================================
+        // CONFIGURAÇÃO DO FIREBASE ATUALIZADA COM AS SUAS CHAVES
+        // =======================================================
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyCxxxxxxxxxxxxxxxxxxxxxx-CE", // Substituído com a sua chave
+            authDomain: "cashless-9e53c.firebaseapp.com",
+            projectId: "cashless-9e53c",
+            storageBucket: "cashless-9e53c.appspot.com",
+            messagingSenderId: "931980612953",
+            appId: "1:931980612953:web:05c7f8a3e47dd90a7b4539"
         };
 
         class CashlessApp {
             constructor() {
                 this.config = {
-                    // =======================================================
-                    // UID DO ADMINISTRADOR DEFINIDO AQUI
-                    // =======================================================
                     adminUID: 'OpC4XsPp0XZsGayCEOjCupp3L8w1'
                 };
                 this.services = this.initFirebase();
@@ -224,7 +224,7 @@
                         this.ui.userIdDisplay.textContent = `Seu ID: ${user.uid}`;
                         this.setupViews();
                         this.listenForProfileChanges();
-                        this.listenForLottery(); // Inicia o listener da loteria
+                        this.listenForLottery();
                     } else {
                         await signInAnonymously(this.services.auth);
                     }
