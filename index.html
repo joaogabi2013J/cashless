@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashless v7.2 - Com Loteria (Admin Corrigido)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --bg-start: #1a202c;
+            --bg-end: #2d3748;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --primary-text: #ffffff;
+            --secondary-text: #a0aec0;
+            --brand-gradient: linear-gradient(to right, #4a90e2, #50e3c2);
+            --button-bg: #4a90e2;
+            --button-hover-bg: #4281cb;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-start);
+            background-image: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            color: var(--primary-text);
+        }
+        .glass-card {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            border-radius: 1rem;
+        }
+        .brand-text {
+            background: var(--brand-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-primary {
+            background-color: var(--button-bg);
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: var(--button-hover-bg);
+        }
+        .modal {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        #reader__dashboard_section_csr button {
+            background-color: var(--button-bg) !important;
+            color: white !important;
+            border: none !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="loading-screen" class="text-center">
+        <h1 class="text-3xl font-bold brand-text">Carregando Sistema Cashless...</h1>
+        <p class="text-gray-400 mt-2">Por favor, aguarde.</p>
+    </div>
+
+    <main id="app-container" class="w-full max-w-md mx-auto hidden">
+        <div class="glass-card p-6 shadow-2xl">
+            <div class="text-center mb-6">
+                <h1 class="text-3xl font-bold brand-text">Sistema Cashless</h1>
+                <p id="user-id-display" class="text-xs text-gray-400 mt-2 break-all"></p>
+            </div>
+
+            <div id="user-view">
+                <div class="text-center mb-6">
+                    <h2 class="text-lg font-semibold text-gray-300">Seu Saldo</h2>
+                    <p id="balance-display" class="text-5xl font-extrabold mt-1">R$ 0,00</p>
+                </div>
+                <div class="flex flex-col space-y-3">
+                    <button id="show-qr-btn" class="w-full py-3 px-4 rounded-lg font-semibold btn-primary">Mostrar Meu QR Code</button>
+                    <button id="history-btn" class="w-full py-3 px-4 rounded-lg font-semibold bg-white/10 hover:bg-white/20">Histórico de Compras</button>
+                </div>
+            </div>
+
+            <div id="admin-view" class="hidden">
+                 <div class="text-center mb-6">
+                    <h2 class="text-lg font-semibold text-gray-300">Painel do Vendedor</h2>
+                </div>
+                <button id="scan-qr-btn" class="w-full py-3 px-4 rounded-lg font-semibold btn-primary">Escanear QR Code do Cliente</button>
+            </div>
+            
+            <!-- Seção da Loteria -->
+            <div id="lottery-section" class="mt-8 pt-6 border-t border-white/10">
+                 <div class="text-center mb-4">
+                    <h2 class="text-2xl font-bold brand-text">Loteria</h2>
+                </div>
+                <div id="lottery-info" class="text-center glass-card p-4">
+                    <!-- Conteúdo da loteria será inserido aqui -->
+                </div>
+            </div>
+
+            <!-- Painel de Admin da Loteria -->
+            <div id="lottery-admin-panel" class="hidden mt-6 pt-6 border-t-2 border-dashed border-amber-400/20">
+                 <div class="text-center mb-4">
+                    <h2 class="text-xl font-bold text-amber-300">Admin da Loteria</h2>
+                </div>
+                <div id="lottery-admin-controls" class="flex flex-col space-y-3">
+                    <!-- Controles do admin da loteria aqui -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="qr-code-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
+        <div class="glass-card p-8 rounded-lg text-center relative w-11/12 max-w-sm">
+            <h2 class="text-xl font-bold mb-4">Seu QR Code</h2>
+            <div id="qrcode-container" class="flex justify-center bg-white p-4 rounded-md"></div>
+            <p class="text-sm text-gray-400 mt-4">Apresente este código para o vendedor.</p>
+            <button onclick="App.hideModal('qr-code-modal')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20">×</button>
+        </div>
+    </div>
+
+    <div id="scanner-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
+        <div class="glass-card p-4 rounded-lg text-center relative w-11/12 max-w-lg">
+            <h2 class="text-xl font-bold mb-4">Escanear QR Code</h2>
+            <div id="reader" class="w-full rounded-md overflow-hidden"></div>
+            <button onclick="App.stopScanner()" class="mt-4 w-full py-2 px-4 rounded-lg font-semibold bg-red-500 hover:bg-red-600">Cancelar</button>
+        </div>
+    </div>
+    
+    <div id="purchase-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
+         <div class="glass-card p-8 rounded-lg text-center relative w-11/12 max-w-sm">
+            <h2 class="text-xl font-bold mb-4">Registrar Compra</h2>
+            <p class="mb-1 text-gray-300">Cliente: <span id="customer-name" class="font-bold"></span></p>
+            <p class="mb-4 text-sm text-gray-400">Saldo: <span id="customer-balance" class="font-bold"></span></p>
+            <div id="item-list" class="space-y-2 text-left mb-4 max-h-40 overflow-y-auto">
+                <!-- Itens de exemplo -->
+                <label class="flex items-center space-x-3 p-2 rounded-md hover:bg-white/10"><input type="checkbox" class="item-checkbox" value="10" data-name="Cerveja"><span>Cerveja - R$ 10,00</span></label>
+                <label class="flex items-center space-x-3 p-2 rounded-md hover:bg-white/10"><input type="checkbox" class="item-checkbox" value="5" data-name="Refrigerante"><span>Refrigerante - R$ 5,00</span></label>
+                <label class="flex items-center space-x-3 p-2 rounded-md hover:bg-white/10"><input type="checkbox" class="item-checkbox" value="7" data-name="Espetinho"><span>Espetinho - R$ 7,00</span></label>
+            </div>
+            <div class="font-bold text-2xl my-4">Total: <span id="total-price">R$ 0,00</span></div>
+            <div class="flex flex-col space-y-3">
+                <button id="confirm-purchase-btn" class="w-full py-3 px-4 rounded-lg font-semibold btn-primary">Confirmar Compra</button>
+                <button onclick="App.hideModal('purchase-modal')" class="w-full py-2 px-4 rounded-lg font-semibold bg-white/10 hover:bg-white/20">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
+        <div class="glass-card p-6 rounded-lg relative w-11/12 max-w-md">
+            <h2 class="text-xl font-bold mb-4 text-center">Histórico de Compras</h2>
+            <div id="history-list" class="max-h-80 overflow-y-auto space-y-2">
+                <!-- Histórico será inserido aqui -->
+            </div>
+            <button onclick="App.hideModal('history-modal')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20">×</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, collection, addDoc, query, where, getDocs, arrayUnion, serverTimestamp, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        class CashlessApp {
+            constructor() {
+                this.config = {
+                    // =======================================================
+                    // UID DO ADMINISTRADOR DEFINIDO AQUI
+                    // =======================================================
+                    adminUID: 'OpC4XsPp0XZsGayCEOjCupp3L8w1'
+                };
+                this.services = this.initFirebase();
+                this.state = {
+                    currentUser: null,
+                    userProfile: { balance: 0, name: '' },
+                    scannedCustomer: null,
+                    activeLottery: null,
+                };
+                this.ui = {
+                    loadingScreen: document.getElementById('loading-screen'),
+                    appContainer: document.getElementById('app-container'),
+                    userIdDisplay: document.getElementById('user-id-display'),
+                    balanceDisplay: document.getElementById('balance-display'),
+                    adminView: document.getElementById('admin-view'),
+                    userView: document.getElementById('user-view'),
+                    qrCodeContainer: document.getElementById('qrcode-container'),
+                    totalPrice: document.getElementById('total-price'),
+                    customerName: document.getElementById('customer-name'),
+                    customerBalance: document.getElementById('customer-balance'),
+                    lotteryInfo: document.getElementById('lottery-info'),
+                    lotteryAdminPanel: document.getElementById('lottery-admin-panel'),
+                    lotteryAdminControls: document.getElementById('lottery-admin-controls'),
+                };
+                this.html5QrCode = null;
+            }
+
+            initFirebase() {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+                return { app, auth, db };
+            }
+
+            async init() {
+                this.attachEventListeners();
+                onAuthStateChanged(this.services.auth, async (user) => {
+                    if (user) {
+                        this.state.currentUser = user;
+                        await this.getOrCreateUserProfile();
+                        this.ui.loadingScreen.classList.add('hidden');
+                        this.ui.appContainer.classList.remove('hidden');
+                        this.ui.userIdDisplay.textContent = `Seu ID: ${user.uid}`;
+                        this.setupViews();
+                        this.listenForProfileChanges();
+                        this.listenForLottery(); // Inicia o listener da loteria
+                    } else {
+                        await signInAnonymously(this.services.auth);
+                    }
+                });
+            }
+
+            attachEventListeners() {
+                document.getElementById('show-qr-btn').addEventListener('click', () => this.showQrCode());
+                document.getElementById('scan-qr-btn').addEventListener('click', () => this.startScanner());
+                document.getElementById('confirm-purchase-btn').addEventListener('click', () => this.processPurchase());
+                document.getElementById('history-btn').addEventListener('click', () => this.showHistory());
+                
+                document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => this.updateTotal());
+                });
+            }
+
+            async getOrCreateUserProfile() {
+                const userRef = doc(this.services.db, "users", this.state.currentUser.uid);
+                const userSnap = await getDoc(userRef);
+                if (!userSnap.exists()) {
+                    const name = `Usuário-${this.state.currentUser.uid.substring(0, 5)}`;
+                    await setDoc(userRef, { 
+                        name: name,
+                        balance: 100.00, // Saldo inicial para teste
+                        createdAt: serverTimestamp()
+                    });
+                     this.state.userProfile = { name, balance: 100.00 };
+                } else {
+                    this.state.userProfile = userSnap.data();
+                }
+            }
+            
+            listenForProfileChanges() {
+                const userRef = doc(this.services.db, "users", this.state.currentUser.uid);
+                onSnapshot(userRef, (doc) => {
+                    this.state.userProfile = doc.data();
+                    this.ui.balanceDisplay.textContent = `R$ ${this.state.userProfile.balance.toFixed(2)}`;
+                });
+            }
+
+            setupViews() {
+                if (this.state.currentUser.uid === this.config.adminUID) {
+                    this.ui.adminView.classList.remove('hidden');
+                    this.ui.userView.classList.add('hidden');
+                    this.ui.lotteryAdminPanel.classList.remove('hidden');
+                } else {
+                    this.ui.adminView.classList.add('hidden');
+                    this.ui.userView.classList.remove('hidden');
+                    this.ui.lotteryAdminPanel.classList.add('hidden');
+                }
+            }
+
+            showModal(modalId) {
+                document.getElementById(modalId).classList.remove('hidden');
+                document.getElementById(modalId).classList.add('flex');
+            }
+
+            hideModal(modalId) {
+                document.getElementById(modalId).classList.add('hidden');
+                document.getElementById(modalId).classList.remove('flex');
+            }
+
+            showQrCode() {
+                this.ui.qrCodeContainer.innerHTML = "";
+                new QRCode(this.ui.qrCodeContainer, {
+                    text: this.state.currentUser.uid,
+                    width: 200,
+                    height: 200,
+                });
+                this.showModal('qr-code-modal');
+            }
+
+            startScanner() {
+                this.showModal('scanner-modal');
+                this.html5QrCode = new Html5Qrcode("reader");
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                this.html5QrCode.start({ facingMode: "environment" }, config, 
+                    (decodedText) => this.onScanSuccess(decodedText),
+                    (errorMessage) => {}
+                );
+            }
+
+            async stopScanner() {
+                if (this.html5QrCode) {
+                    try {
+                        await this.html5QrCode.stop();
+                        this.html5QrCode.clear();
+                    } catch (err) {
+                        console.error("Erro ao parar o scanner:", err);
+                    }
+                }
+                this.hideModal('scanner-modal');
+            }
+
+            async onScanSuccess(customerId) {
+                await this.stopScanner();
+                const userRef = doc(this.services.db, "users", customerId);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    this.state.scannedCustomer = { id: customerId, ...userSnap.data() };
+                    this.ui.customerName.textContent = this.state.scannedCustomer.name;
+                    this.ui.customerBalance.textContent = `R$ ${this.state.scannedCustomer.balance.toFixed(2)}`;
+                    this.updateTotal();
+                    this.showModal('purchase-modal');
+                } else {
+                    alert("Cliente não encontrado!");
+                }
+            }
+            
+            updateTotal() {
+                let total = 0;
+                document.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
+                    total += parseFloat(checkbox.value);
+                });
+                this.ui.totalPrice.textContent = `R$ ${total.toFixed(2)}`;
+            }
+
+            async processPurchase() {
+                const total = parseFloat(this.ui.totalPrice.textContent.replace('R$ ', ''));
+                if (total <= 0) {
+                    alert("Selecione pelo menos um item.");
+                    return;
+                }
+                if (this.state.scannedCustomer.balance < total) {
+                    alert("Saldo insuficiente!");
+                    return;
+                }
+
+                const newBalance = this.state.scannedCustomer.balance - total;
+                const customerRef = doc(this.services.db, "users", this.state.scannedCustomer.id);
+                
+                const items = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => ({
+                    name: cb.dataset.name,
+                    price: parseFloat(cb.value)
+                }));
+
+                try {
+                    await updateDoc(customerRef, { balance: newBalance });
+                    await addDoc(collection(this.services.db, "transactions"), {
+                        customerId: this.state.scannedCustomer.id,
+                        vendorId: this.state.currentUser.uid,
+                        items: items,
+                        total: total,
+                        createdAt: serverTimestamp()
+                    });
+
+                    alert("Compra realizada com sucesso!");
+                    this.hideModal('purchase-modal');
+                    document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
+                } catch (error) {
+                    console.error("Erro ao processar compra:", error);
+                    alert("Ocorreu um erro. Tente novamente.");
+                }
+            }
+
+            async showHistory() {
+                this.showModal('history-modal');
+                const historyListEl = document.getElementById('history-list');
+                historyListEl.innerHTML = '<p class="text-center text-gray-400">Carregando histórico...</p>';
+                
+                const q = query(collection(this.services.db, "transactions"), where("customerId", "==", this.state.currentUser.uid), orderBy("createdAt", "desc"));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    historyListEl.innerHTML = '<p class="text-center text-gray-500">Nenhuma compra encontrada.</p>';
+                    return;
+                }
+
+                historyListEl.innerHTML = '';
+                snapshot.forEach(doc => {
+                    const tx = doc.data();
+                    const date = tx.createdAt ? tx.createdAt.toDate().toLocaleString('pt-BR') : 'Data pendente';
+                    let itemsHtml = tx.items.map(item => `<li>${item.name} - R$ ${item.price.toFixed(2)}</li>`).join('');
+
+                    const txEl = document.createElement('div');
+                    txEl.className = 'p-3 border-b border-white/10';
+                    txEl.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold">R$ ${tx.total.toFixed(2)}</span>
+                            <span class="text-sm text-gray-400">${date}</span>
+                        </div>
+                        <ul class="text-sm text-gray-300 list-disc list-inside mt-1">
+                            ${itemsHtml}
+                        </ul>
+                    `;
+                    historyListEl.appendChild(txEl);
+                });
+            }
+            
+            // --- MÉTODOS DA LOTERIA ---
+
+            listenForLottery() {
+                const lotteryQuery = query(collection(this.services.db, "lotteries"), orderBy("createdAt", "desc"), limit(1));
+                onSnapshot(lotteryQuery, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const lotteryData = snapshot.docs[0].data();
+                        lotteryData.id = snapshot.docs[0].id;
+                        this.state.activeLottery = lotteryData;
+                    } else {
+                        this.state.activeLottery = null;
+                    }
+                    this.renderLottery();
+                    if (this.state.currentUser.uid === this.config.adminUID) {
+                        this.renderLotteryAdminControls();
+                    }
+                });
+            }
+
+            renderLottery() {
+                const lottery = this.state.activeLottery;
+                if (!lottery || !lottery.isActive) {
+                    this.ui.lotteryInfo.innerHTML = `
+                        <p class="text-gray-400">Nenhuma loteria ativa no momento.</p>
+                        ${lottery && lottery.winnerName ? `
+                        <div class="mt-4 pt-4 border-t border-white/10">
+                            <p class="text-sm">Último Ganhador:</p>
+                            <p class="font-bold text-lg text-amber-300">${lottery.winnerName}</p>
+                            <p class="text-xs text-gray-500">Prêmio: ${lottery.prize}</p>
+                        </div>
+                        ` : ''}
+                    `;
+                    return;
+                }
+
+                const participantCount = lottery.participants?.length || 0;
+                const userHasJoined = lottery.participants?.includes(this.state.currentUser.uid);
+
+                this.ui.lotteryInfo.innerHTML = `
+                    <p class="text-lg">Prêmio:</p>
+                    <p class="text-3xl font-bold text-amber-300 mb-3">${lottery.prize}</p>
+                    <p class="text-sm text-gray-300 mb-4">${participantCount} participante(s)</p>
+                    <button id="join-lottery-btn" class="w-full py-2 px-4 rounded-lg font-semibold ${userHasJoined ? 'bg-green-600 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600'}" ${userHasJoined ? 'disabled' : ''}>
+                        ${userHasJoined ? 'Você já está participando!' : 'Entrar na Loteria'}
+                    </button>
+                `;
+
+                if (!userHasJoined) {
+                    document.getElementById('join-lottery-btn').addEventListener('click', () => this.joinLottery());
+                }
+            }
+            
+            renderLotteryAdminControls() {
+                const lottery = this.state.activeLottery;
+                if (lottery && lottery.isActive) {
+                    this.ui.lotteryAdminControls.innerHTML = `
+                        <button id="end-lottery-btn" class="w-full py-3 px-4 rounded-lg font-semibold bg-red-500 hover:bg-red-600">Sortear Ganhador e Encerrar</button>
+                    `;
+                    document.getElementById('end-lottery-btn').addEventListener('click', () => this.endLottery());
+                } else {
+                    this.ui.lotteryAdminControls.innerHTML = `
+                        <button id="start-lottery-btn" class="w-full py-3 px-4 rounded-lg font-semibold bg-green-500 hover:bg-green-600">Iniciar Nova Loteria</button>
+                    `;
+                    document.getElementById('start-lottery-btn').addEventListener('click', () => this.startLottery());
+                }
+            }
+
+            async joinLottery() {
+                if (!this.state.activeLottery || !this.state.activeLottery.isActive) {
+                    alert("A loteria não está mais ativa!");
+                    return;
+                }
+                const lotteryRef = doc(this.services.db, "lotteries", this.state.activeLottery.id);
+                try {
+                    await updateDoc(lotteryRef, {
+                        participants: arrayUnion(this.state.currentUser.uid)
+                    });
+                    alert("Você entrou na loteria! Boa sorte!");
+                } catch (error) {
+                    console.error("Erro ao entrar na loteria:", error);
+                    alert("Não foi possível entrar na loteria. Tente novamente.");
+                }
+            }
+
+            async startLottery() {
+                const prize = prompt("Qual é o prêmio para esta rodada da loteria?");
+                if (!prize) return;
+
+                try {
+                    await addDoc(collection(this.services.db, "lotteries"), {
+                        prize: prize,
+                        isActive: true,
+                        participants: [],
+                        winnerId: null,
+                        winnerName: null,
+                        createdAt: serverTimestamp()
+                    });
+                    alert("Nova loteria iniciada!");
+                } catch (error) {
+                    console.error("Erro ao iniciar loteria:", error);
+                    alert("Não foi possível iniciar a loteria.");
+                }
+            }
+
+            async endLottery() {
+                const lottery = this.state.activeLottery;
+                if (!lottery || !lottery.isActive) {
+                    alert("Nenhuma loteria ativa para encerrar.");
+                    return;
+                }
+                if (!lottery.participants || lottery.participants.length === 0) {
+                    alert("Ninguém participou desta loteria. Encerrando sem um ganhador.");
+                     const lotteryRef = doc(this.services.db, "lotteries", lottery.id);
+                     await updateDoc(lotteryRef, { isActive: false });
+                    return;
+                }
+
+                const winnerIndex = Math.floor(Math.random() * lottery.participants.length);
+                const winnerId = lottery.participants[winnerIndex];
+                
+                const userRef = doc(this.services.db, "users", winnerId);
+                const userSnap = await getDoc(userRef);
+                const winnerName = userSnap.exists() ? userSnap.data().name : "Nome Desconhecido";
+
+                const lotteryRef = doc(this.services.db, "lotteries", lottery.id);
+                try {
+                    await updateDoc(lotteryRef, {
+                        isActive: false,
+                        winnerId: winnerId,
+                        winnerName: winnerName
+                    });
+                    alert(`O ganhador é ${winnerName}!`);
+                } catch (error) {
+                    console.error("Erro ao encerrar a loteria:", error);
+                    alert("Não foi possível encerrar a loteria.");
+                }
+            }
+        }
+
+        window.App = new CashlessApp();
+        App.init();
+
+    </script>
+</body>
+</html>
+
+
