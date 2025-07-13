@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cashless v7.3 - Configuração Firebase</title>
+    <title>Cashless v6.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,548 +18,394 @@
             --card-border: rgba(255, 255, 255, 0.1);
             --primary-text: #ffffff;
             --secondary-text: #a0aec0;
-            --brand-gradient: linear-gradient(to right, #4a90e2, #50e3c2);
-            --button-bg: #4a90e2;
-            --button-hover-bg: #4281cb;
+            --brand-gradient: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            --accent-green: #38a169;
         }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-start);
-            background-image: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
-            color: var(--primary-text);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-start); }
+        #app-container { background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%); }
+        .screen { display: none; animation: fadeIn 0.5s ease-in-out; }
+        .screen.active { display: flex; }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .glass-card {
-            background-color: var(--card-bg);
+            background: var(--card-bg);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--card-border);
-            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        .brand-text {
-            background: var(--brand-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .btn:hover {
+            transform: scale(1.03);
         }
         .btn-primary {
-            background-color: var(--button-bg);
-            transition: background-color 0.3s ease;
+            background: var(--brand-gradient);
+            color: var(--brand-dark);
+            box-shadow: 0 4px 20px 0 rgba(255, 153, 0, 0.3);
         }
-        .btn-primary:hover {
-            background-color: var(--button-hover-bg);
-        }
-        .modal {
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-        }
-        #reader__dashboard_section_csr button {
-            background-color: var(--button-bg) !important;
-            color: white !important;
-            border: none !important;
-        }
+        .icon { stroke-width: 2; width: 24px; height: 24px; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="antialiased">
 
-    <div id="loading-screen" class="text-center">
-        <h1 class="text-3xl font-bold brand-text">Carregando Sistema Cashless...</h1>
-        <p class="text-gray-400 mt-2">Por favor, aguarde.</p>
-    </div>
+    <div id="app-container" class="max-w-md mx-auto min-h-screen flex flex-col">
 
-    <main id="app-container" class="w-full max-w-md mx-auto hidden">
-        <div class="glass-card p-6 shadow-2xl">
-            <div class="text-center mb-6">
-                <h1 class="text-3xl font-bold brand-text">Sistema Cashless</h1>
-                <p id="user-id-display" class="text-xs text-gray-400 mt-2 break-all"></p>
+        <!-- Telas de Estado -->
+        <div id="loading-screen" class="screen active flex-col items-center justify-center p-6"><svg class="animate-spin h-10 w-10 text-[var(--brand-orange)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><h2 class="text-xl font-semibold mt-4 text-white">Iniciando...</h2></div>
+        <div id="data-loading-screen" class="screen flex-col items-center justify-center p-6"><svg class="animate-spin h-10 w-10 text-[var(--brand-orange)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><h2 class="text-xl font-semibold mt-4 text-white">Carregando seus dados...</h2></div>
+        
+        <!-- Telas Principais -->
+        <div id="auth-screen" class="screen flex-col justify-center p-8"></div>
+        <div id="role-selection-screen" class="screen flex-col items-center justify-center p-8 space-y-8">
+            <h1 class="text-3xl font-extrabold text-center text-white">Defina seu Perfil</h1>
+            <p class="text-center text-gray-400">Esta escolha é permanente e definirá como você usará o aplicativo.</p>
+            <div class="w-full space-y-6">
+                <button id="select-role-client" class="w-full text-white font-bold p-6 rounded-2xl text-2xl btn glass-card flex flex-col items-center"><svg class="icon mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>Sou Cliente</button>
+                <button id="select-role-vendor" class="w-full text-white font-bold p-6 rounded-2xl text-2xl btn glass-card flex flex-col items-center"><svg class="icon mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>Sou Vendedor</button>
             </div>
-
-            <div id="user-view">
-                <div class="text-center mb-6">
-                    <h2 class="text-lg font-semibold text-gray-300">Seu Saldo</h2>
-                    <p id="balance-display" class="text-5xl font-extrabold mt-1">R$ 0,00</p>
-                </div>
-                <div class="flex flex-col space-y-3">
-                    <button id="show-qr-btn" class="w-full py-3 px-4 rounded-lg font-semibold btn-primary">Mostrar Meu QR Code</button>
-                    <button id="history-btn" class="w-full py-3 px-4 rounded-lg font-semibold bg-white/10 hover:bg-white/20">Histórico de Compras</button>
-                </div>
-            </div>
-
-            <div id="admin-view" class="hidden">
-                 <div class="text-center mb-6">
-                    <h2 class="text-lg font-semibold text-gray-300">Painel do Vendedor</h2>
-                </div>
-                <button id="scan-qr-btn" class="w-full py-3 px-4 rounded-lg font-semibold btn-primary">Escanear QR Code do Cliente</button>
-            </div>
-            
-            <!-- Seção da Loteria -->
-            <div id="lottery-section" class="mt-8 pt-6 border-t border-white/10">
-                 <div class="text-center mb-4">
-                    <h2 class="text-2xl font-bold brand-text">Loteria</h2>
-                </div>
-                <div id="lottery-info" class="text-center glass-card p-4">
-                    <!-- Conteúdo da loteria será inserido aqui -->
-                </div>
-            </div>
-
-            <!-- Painel de Admin da Loteria -->
-            <div id="lottery-admin-panel" class="hidden mt-6 pt-6 border-t-2 border-dashed border-amber-400/20">
-                 <div class="text-center mb-4">
-                    <h2 class="text-xl font-bold text-amber-300">Admin da Loteria</h2>
-                </div>
-                <div id="lottery-admin-controls" class="flex flex-col space-y-3">
-                    <!-- Controles do admin da loteria aqui -->
-                </div>
-            </div>
-
         </div>
-    </main>
+
+        <!-- MODO CLIENTE -->
+        <div id="client-dashboard-screen" class="screen flex-col text-white">
+            <header class="p-6 flex justify-between items-center"><h1 class="text-2xl font-bold">Minha Carteira</h1><button id="client-logout-button" class="glass-card p-2 rounded-full"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button></header>
+            <main class="p-6 space-y-6 flex-grow">
+                <div class="p-6 rounded-2xl text-center glass-card"><span class="text-sm uppercase font-semibold text-gray-400">Saldo Atual</span><p id="client-balance-display" class="text-5xl font-extrabold">R$ 0,00</p></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="redeem-code-button" class="glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-2 btn"><svg class="icon text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg><span class="font-semibold text-sm">Recarregar</span></button>
+                    <button id="pay-nfc-button" class="glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-2 btn"><svg class="icon text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12s-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path></svg><span class="font-semibold text-sm">Pagar NFC</span></button>
+                    <button id="show-my-code-button" class="glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-2 btn"><svg class="icon text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6.586 4.414l.707.707M4 12h-1m17.586 4.414l-.707.707M6.414 6.414l.707-.707m12.172 0l-.707-.707M12 20.5v.5m-6.414-1.414l-.707.707M17.586 6.414l.707-.707"></path></svg><span class="font-semibold text-sm">Meu Código</span></button>
+                    <button id="show-history-button" class="glass-card p-4 rounded-2xl flex flex-col items-center justify-center space-y-2 btn"><svg class="icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg><span class="font-semibold text-sm">Histórico</span></button>
+                </div>
+            </main>
+            <footer class="p-4"><button id="client-back-to-mode-selection" class="w-full text-center text-sm text-gray-400 hover:text-white">Não é seu perfil? Trocar</button></footer>
+        </div>
+
+        <!-- TELA DE RESGATE DE CÓDIGO -->
+        <div id="redeem-code-screen" class="screen flex-col p-6 space-y-6 justify-center">
+            <h2 class="text-3xl font-bold text-center text-white">Resgatar Código</h2>
+            <form id="redeem-code-form" class="w-full space-y-4">
+                <input type="text" id="recharge-code-input" placeholder="Digite o código de recarga" class="w-full text-center text-lg px-4 py-4 rounded-2xl bg-white/10 text-white border-2 border-[var(--card-border)] focus:outline-none focus:ring-2 ring-[var(--brand-orange)]" required>
+                <button type="submit" class="w-full font-bold py-4 rounded-2xl text-xl btn btn-primary">Resgatar</button>
+            </form>
+            <button id="redeem-code-back-button" class="w-full text-center text-gray-400 hover:text-white">Voltar</button>
+        </div>
+
+        <!-- MODO VENDEDOR -->
+        <div id="vendor-dashboard-screen" class="screen flex-col h-screen">
+            <header class="p-6 flex justify-between items-center"><h1 class="text-2xl font-bold text-white">Ponto de Venda</h1><button id="vendor-logout-button" class="glass-card p-2 rounded-full text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg></button></header>
+            <div class="px-6 pb-4"><div class="glass-card p-4 rounded-2xl flex justify-between items-center"><span class="text-sm uppercase font-semibold text-gray-400">Meu Saldo</span><p id="vendor-balance-display" class="text-2xl font-extrabold text-green-400">R$ 0,00</p></div></div>
+            <div class="px-6 pb-4 grid grid-cols-3 gap-4">
+                <button id="open-recharge-modal-button" class="w-full text-white text-xs font-bold py-3 rounded-2xl glass-card btn">Recarregar</button>
+                <button id="open-card-manager-button" class="w-full text-white text-xs font-bold py-3 rounded-2xl glass-card btn">Ger. Cartões</button>
+                <button id="open-code-generator-button" class="w-full text-white text-xs font-bold py-3 rounded-2xl glass-card btn">Gerar Código</button>
+            </div>
+            <main class="flex-grow flex flex-col md:flex-row overflow-hidden">
+                <div class="w-full md:w-1/2 p-3 overflow-y-auto"><div class="flex justify-between items-center mb-3 px-3"><h3 class="font-bold text-lg text-white">Produtos</h3><button id="manage-products-button" class="glass-card text-white text-sm font-semibold py-1 px-3 rounded-lg">Gerenciar</button></div><div id="vendor-product-list" class="grid grid-cols-2 gap-4 p-3"></div></div>
+                <div class="w-full md:w-1/2 p-3 flex flex-col bg-black/20 rounded-t-3xl"><h3 class="font-bold text-lg mb-3 px-3 text-white">Carrinho</h3><div id="cart-items" class="flex-grow space-y-2 overflow-y-auto px-3"><p class="text-gray-400 text-center mt-8">Carrinho vazio.</p></div><div class="border-t border-white/10 pt-3 mt-3 px-3"><div class="flex justify-between font-bold text-xl text-white"><span>Total</span><span id="cart-total">R$ 0,00</span></div><button id="checkout-button" class="w-full font-bold py-4 rounded-2xl mt-3 btn btn-primary disabled:opacity-50" disabled>Cobrar</button></div></div>
+            </main>
+            <footer class="p-4"><button id="vendor-back-to-mode-selection" class="w-full text-center text-sm text-gray-400 hover:text-white">Não é seu perfil? Trocar</button></footer>
+        </div>
+
+        <!-- TELA DE PAGAMENTO DO VENDEDOR -->
+        <div id="vendor-payment-screen" class="screen flex-col justify-center p-6 text-white">
+            <h2 class="text-2xl font-light text-center">Valor a Pagar</h2><p id="payment-total-display" class="text-6xl font-extrabold text-center my-6 text-[var(--brand-orange)]">R$ 0,00</p>
+            <div class="space-y-4">
+                <button id="receive-via-nfc-button" class="w-full p-4 rounded-lg font-semibold text-lg btn glass-card">Ler Cartão / Celular NFC</button>
+                <button id="receive-via-qr-button" type="button" class="w-full p-4 rounded-lg font-semibold text-lg btn glass-card">Ler QR Code (Câmera)</button>
+                <button id="import-qr-button" type="button" class="w-full p-4 rounded-lg font-semibold text-lg btn glass-card">Importar QR Code (Galeria)</button>
+                <input type="file" id="qr-file-input" class="hidden" accept="image/*">
+                <form id="receive-via-code-form" class="flex space-x-2"><input type="number" id="receive-code-input" placeholder="Código do Cliente" class="w-full px-3 py-2 rounded-lg text-gray-800"><button type="submit" class="bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg btn">OK</button></form>
+            </div>
+            <button id="cancel-payment-button" class="mt-8 text-center text-gray-400 hover:text-white">Cancelar</button>
+        </div>
+    </div>
 
     <!-- Modals -->
-    <div id="qr-code-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
-        <div class="glass-card p-8 rounded-lg text-center relative w-11/12 max-w-sm">
-            <h2 class="text-xl font-bold mb-4">Seu QR Code</h2>
-            <div id="qrcode-container" class="flex justify-center bg-white p-4 rounded-md"></div>
-            <p class="text-sm text-gray-400 mt-4">Apresente este código para o vendedor.</p>
-            <button onclick="App.hideModal('qr-code-modal')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20">×</button>
-        </div>
-    </div>
-
-    <div id="scanner-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
-        <div class="glass-card p-4 rounded-lg text-center relative w-11/12 max-w-lg">
-            <h2 class="text-xl font-bold mb-4">Escanear QR Code</h2>
-            <div id="reader" class="w-full rounded-md overflow-hidden"></div>
-            <button onclick="App.stopScanner()" class="mt-4 w-full py-2 px-4 rounded-lg font-semibold bg-red-500 hover:bg-red-600">Cancelar</button>
-        </div>
-    </div>
-    
-    <div id="purchase-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
-         <div class="glass-card p-8 rounded-lg text-center relative w-11/12 max-w-sm">
-            <h2 class="text-xl font-bold mb-4">Registrar Compra</h2>
-            <p class="mb-1 text-gray-300">Cliente: <span id="customer-name" class="font-bold"></span></p>
-            <p class="mb-4 text-sm text-gray-400">Saldo: <span id="customer-balance" class="font-bold"></span></p>
-            <div id="item-list" class="space-y-2 text-left mb-4 max-h-40 overflow-y-auto">
-                <!-- Itens de exemplo -->
-                <label class="flex items-center space-x-3 p-2 rounded-md hover:bg-white/10"><input type="checkbox" class="item-checkbox" value="10" data-name="Cerveja"><span>Cerveja - R$ 10,00</span></label>
-                <label class="flex items-center space-x-3 p-2 rounded-md hover:bg-white/10"><input type="checkbox" class="item-checkbox" value="5" data-name="Refrigerante"><span>Refrigerante - R$ 5,00</span></label>
-                <label class="flex items-center space-x-3 p-2 rounded-md hover:bg-white/10"><input type="checkbox" class="item-checkbox" value="7" data-name="Espetinho"><span>Espetinho - R$ 7,00</span></label>
-            </div>
-            <div class="font-bold text-2xl my-4">Total: <span id="total-price">R$ 0,00</span></div>
-            <div class="flex flex-col space-y-3">
-                <button id="confirm-purchase-btn" class="w-full py-3 px-4 rounded-lg font-semibold btn-primary">Confirmar Compra</button>
-                <button onclick="App.hideModal('purchase-modal')" class="w-full py-2 px-4 rounded-lg font-semibold bg-white/10 hover:bg-white/20">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="history-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal">
-        <div class="glass-card p-6 rounded-lg relative w-11/12 max-w-md">
-            <h2 class="text-xl font-bold mb-4 text-center">Histórico de Compras</h2>
-            <div id="history-list" class="max-h-80 overflow-y-auto space-y-2">
-                <!-- Histórico será inserido aqui -->
-            </div>
-            <button onclick="App.hideModal('history-modal')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20">×</button>
-        </div>
-    </div>
+    <div id="generic-modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center p-4 z-50"><div class="glass-card text-white rounded-2xl shadow-xl p-6 max-w-sm w-full"><div id="generic-modal-content"></div><button id="generic-modal-close-button" class="mt-6 bg-white/10 text-white font-bold py-2 px-6 rounded-lg hover:bg-white/20 w-full">Fechar</button></div></div>
+    <div id="history-modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center p-4 z-50"><div class="glass-card text-white rounded-2xl shadow-xl p-6 max-w-md w-full h-4/5 flex flex-col"><h2 class="text-2xl font-bold mb-4">Histórico de Compras</h2><div id="history-list" class="flex-grow overflow-y-auto border-t border-white/10 pt-3"></div><button id="close-history-modal-button" class="mt-6 bg-white/10 text-white font-bold py-2 px-6 rounded-lg hover:bg-white/20 w-full">Fechar</button></div></div>
+    <div id="manage-products-modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center p-4 z-50"><div class="glass-card text-white rounded-2xl shadow-xl p-6 max-w-sm w-full h-4/5 flex flex-col"><h2 class="text-2xl font-bold mb-4">Gerenciar Produtos</h2><form id="add-product-form" class="space-y-3 mb-4"><input type="text" id="product-name" placeholder="Nome do produto" class="w-full px-3 py-2 border-2 border-gray-600 bg-gray-700 text-white rounded-lg" required><input type="number" id="product-price" placeholder="Preço (ex: 12.50)" step="0.01" class="w-full px-3 py-2 border-2 border-gray-600 bg-gray-700 text-white rounded-lg" required><button type="submit" class="w-full font-bold py-2 rounded-lg btn btn-primary">Adicionar Produto</button></form><div class="flex-grow overflow-y-auto border-t border-white/10 pt-3"><h3 class="font-semibold mb-2">Lista de Produtos</h3><div id="products-management-list" class="space-y-2"></div></div><button id="close-products-modal-button" class="mt-6 bg-white/10 text-white font-bold py-2 px-6 rounded-lg hover:bg-white/20 w-full">Fechar</button></div></div>
+    <div id="qr-reader-modal" class="modal fixed inset-0 bg-black z-50 flex-col items-center justify-center"><p class="text-white text-lg mb-4">Aponte a câmera para o QR Code do cliente</p><div id="qr-reader" class="w-full max-w-sm border-4 border-white rounded-lg overflow-hidden"></div><button id="qr-reader-close" class="mt-6 bg-red-500 text-white font-bold py-2 px-8 rounded-lg">Cancelar</button></div>
+    <div id="card-manager-modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center p-4 z-50"><div class="glass-card text-white rounded-2xl shadow-xl p-6 max-w-md w-full h-auto flex flex-col"><h2 class="text-2xl font-bold mb-4 text-[var(--brand-purple)]">Gerenciar Cartões NFC</h2><div class="space-y-4"><div class="p-3 border border-white/10 rounded-lg"><h3 class="font-semibold mb-2">1. Ler Cartão NFC</h3><button id="read-card-button" class="w-full bg-blue-500 text-white p-3 rounded-lg">Ler ID do Cartão</button><p class="mt-2">ID LIDO: <strong id="scanned-card-id" class="text-blue-400">Nenhum</strong></p></div><div class="p-3 border border-white/10 rounded-lg"><h3 class="font-semibold mb-2">2. Buscar Usuário (para vincular)</h3><form id="search-user-for-card-form" class="flex space-x-2"><input type="email" id="search-user-for-card-email" placeholder="E-mail do usuário" class="w-full px-3 py-2 bg-white/10 border-2 border-white/20 rounded-lg" required><button type="submit" class="bg-gray-600 text-white font-bold p-3 rounded-lg">Buscar</button></form><div id="found-user-for-card-info" class="mt-2 text-sm"></div></div><div class="p-3 border-t border-white/10"><h3 class="font-semibold mb-2">3. Vincular</h3><button id="link-card-button" class="w-full text-white font-bold p-3 rounded-lg btn bg-[var(--brand-purple)] disabled:opacity-50" disabled>Vincular Cartão ao Usuário</button></div></div><button id="close-card-manager-modal-button" class="mt-6 bg-white/10 text-white font-bold py-2 px-6 rounded-lg hover:bg-white/20 w-full">Fechar</button></div></div>
+    <div id="recharge-modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center p-4 z-50"><div class="glass-card text-white rounded-2xl shadow-xl p-6 max-w-md w-full h-auto flex flex-col"><h2 class="text-2xl font-bold mb-4 text-[var(--brand-orange)]">Recarregar Saldo</h2><div class="space-y-4"><div class="p-3 border border-white/10 rounded-lg"><h3 class="font-semibold mb-2">1. Buscar Usuário</h3><form id="search-user-for-recharge-form" class="flex space-x-2"><input type="email" id="search-user-for-recharge-email" placeholder="E-mail do usuário" class="w-full px-3 py-2 bg-white/10 border-2 border-white/20 rounded-lg" required><button type="submit" class="bg-gray-600 text-white font-bold p-3 rounded-lg">Buscar</button></form><div id="found-user-for-recharge-info" class="mt-2 text-sm"></div></div><div id="recharge-action-div" class="hidden p-3 border border-white/10 rounded-lg"><h3 class="font-semibold mb-2">2. Adicionar Crédito</h3><form id="recharge-form" class="flex space-x-2"><input type="number" id="recharge-amount" placeholder="Valor (ex: 50.00)" step="0.01" class="w-full px-3 py-2 bg-white/10 border-2 border-white/20 rounded-lg" required><button type="submit" class="bg-green-600 text-white font-bold p-3 rounded-lg">Recarregar</button></form></div></div><button id="close-recharge-modal-button" class="mt-6 bg-white/10 text-white font-bold py-2 px-6 rounded-lg hover:bg-white/20 w-full">Fechar</button></div></div>
+    <div id="code-generator-modal" class="modal fixed inset-0 bg-black/50 backdrop-blur-sm items-center justify-center p-4 z-50"><div class="glass-card text-white rounded-2xl shadow-xl p-6 max-w-md w-full h-auto flex flex-col"><h2 class="text-2xl font-bold mb-4 text-[var(--brand-teal)]">Gerador de Código de Recarga</h2><div class="space-y-4"><form id="generate-code-form" class="flex space-x-2"><input type="number" id="generate-code-value" placeholder="Valor do código (ex: 20.00)" class="w-full px-3 py-2 bg-white/10 border-2 border-white/20 rounded-lg" required><button type="submit" class="w-full text-white font-bold p-3 rounded-lg btn bg-[var(--brand-teal)]">Gerar</button></form><div class="p-3 border-t border-white/10"><h3 class="font-semibold mb-2">Código Gerado:</h3><p id="generated-code-display" class="text-center text-2xl font-mono bg-black/20 p-3 rounded-lg break-all">...</p><p class="text-xs text-center mt-2 text-gray-400">Entregue este código ao cliente.</p></div></div><button id="close-code-generator-modal-button" class="mt-6 bg-white/10 text-white font-bold py-2 px-6 rounded-lg hover:bg-white/20 w-full">Fechar</button></div></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, collection, addDoc, query, where, getDocs, arrayUnion, serverTimestamp, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, addDoc, updateDoc, increment, runTransaction, query, where, getDocs, deleteDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // =======================================================
-        // CONFIGURAÇÃO DO FIREBASE ATUALIZADA COM AS SUAS CHAVES
-        // =======================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyDs09Z8AUYgTyc_Wempriv8d9uz0fnjLCI", // Substituído com a sua chave
-            authDomain: "cashless-9e53c.firebaseapp.com",
-            projectId: "cashless-9e53c",
-            storageBucket: "cashless-9e53c.appspot.com",
-            messagingSenderId: "931980612953",
-            appId: "1:931980612953:web:05c7f8a3e47dd90a7b4539"
+        const firebaseConfig = { apiKey: "AIzaSyDs09Z8AUYgTyc_Wempriv8d9uz0fnjLCI", authDomain: "caslessv2.firebaseapp.com", projectId: "caslessv2", storageBucket: "caslessv2.appspot.com", messagingSenderId: "1082219179837", appId: "1:1082219179837:web:973e8ef71f7f5a73331f54" };
+        
+        const App = {
+            services: {},
+            state: { currentUser: null, userData: null, unsubscribeUser: null, unsubscribeProducts: null, nfcAbortController: null, cart: [], cardManagerState: { cardId: null, foundUser: null }, rechargeState: { foundUser: null } },
+            
+            init() {
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    this.services.auth = getAuth(app);
+                    this.services.db = getFirestore(app);
+                    this.setupEventListeners();
+                    this.setupAuthListener();
+                } catch (error) { document.body.innerHTML = `<div class="p-4 text-red-700 bg-red-100">Erro crítico de inicialização: ${error.message}</div>`; }
+            },
+            
+            navigateTo(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId).classList.add('active'); },
+            showModal(modalId, content = {}) { const modal = document.getElementById(modalId); if (modalId === 'generic-modal' && content.html) { document.getElementById('generic-modal-content').innerHTML = content.html; } modal.classList.add('active'); },
+            closeModal(modalId) { if (this.state.nfcAbortController) { this.state.nfcAbortController.abort(); this.state.nfcAbortController = null; } const modal = document.getElementById(modalId); if(modal) modal.classList.remove('active'); },
+            
+            setupAuthListener() { /* ... (código da v5.1) ... */ },
+            async loadInitialData(user) { /* ... (código da v5.1) ... */ },
+            setupEventListeners() { /* ... (código da v5.1) ... */ },
+            createAuthUI() { /* ... (código da v5.1) ... */ },
+            async handleLogin(e) { /* ... (código da v5.1) ... */ },
+            async handleRegister(e) { /* ... (código da v5.1) ... */ },
+            async setUserRole(role) { /* ... (código da v5.1) ... */ },
+            // ... (restante das funções lógicas, que permanecem as mesmas da v4.2)
         };
 
-        class CashlessApp {
-            constructor() {
-                this.config = {
-                    adminUID: 'OpC4XsPp0XZsGayCEOjCupp3L8w1'
-                };
-                this.services = this.initFirebase();
-                this.state = {
-                    currentUser: null,
-                    userProfile: { balance: 0, name: '' },
-                    scannedCustomer: null,
-                    activeLottery: null,
-                };
-                this.ui = {
-                    loadingScreen: document.getElementById('loading-screen'),
-                    appContainer: document.getElementById('app-container'),
-                    userIdDisplay: document.getElementById('user-id-display'),
-                    balanceDisplay: document.getElementById('balance-display'),
-                    adminView: document.getElementById('admin-view'),
-                    userView: document.getElementById('user-view'),
-                    qrCodeContainer: document.getElementById('qrcode-container'),
-                    totalPrice: document.getElementById('total-price'),
-                    customerName: document.getElementById('customer-name'),
-                    customerBalance: document.getElementById('customer-balance'),
-                    lotteryInfo: document.getElementById('lottery-info'),
-                    lotteryAdminPanel: document.getElementById('lottery-admin-panel'),
-                    lotteryAdminControls: document.getElementById('lottery-admin-controls'),
-                };
-                this.html5QrCode = null;
-            }
-
-            initFirebase() {
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                const db = getFirestore(app);
-                return { app, auth, db };
-            }
-
-            async init() {
-                this.attachEventListeners();
-                onAuthStateChanged(this.services.auth, async (user) => {
-                    if (user) {
-                        this.state.currentUser = user;
-                        await this.getOrCreateUserProfile();
-                        this.ui.loadingScreen.classList.add('hidden');
-                        this.ui.appContainer.classList.remove('hidden');
-                        this.ui.userIdDisplay.textContent = `Seu ID: ${user.uid}`;
-                        this.setupViews();
-                        this.listenForProfileChanges();
-                        this.listenForLottery();
-                    } else {
-                        await signInAnonymously(this.services.auth);
-                    }
-                });
-            }
-
-            attachEventListeners() {
-                document.getElementById('show-qr-btn').addEventListener('click', () => this.showQrCode());
-                document.getElementById('scan-qr-btn').addEventListener('click', () => this.startScanner());
-                document.getElementById('confirm-purchase-btn').addEventListener('click', () => this.processPurchase());
-                document.getElementById('history-btn').addEventListener('click', () => this.showHistory());
-                
-                document.querySelectorAll('.item-checkbox').forEach(checkbox => {
-                    checkbox.addEventListener('change', () => this.updateTotal());
-                });
-            }
-
-            async getOrCreateUserProfile() {
-                const userRef = doc(this.services.db, "users", this.state.currentUser.uid);
-                const userSnap = await getDoc(userRef);
-                if (!userSnap.exists()) {
-                    const name = `Usuário-${this.state.currentUser.uid.substring(0, 5)}`;
-                    await setDoc(userRef, { 
-                        name: name,
-                        balance: 100.00, // Saldo inicial para teste
-                        createdAt: serverTimestamp()
-                    });
-                     this.state.userProfile = { name, balance: 100.00 };
-                } else {
-                    this.state.userProfile = userSnap.data();
-                }
-            }
-            
-            listenForProfileChanges() {
-                const userRef = doc(this.services.db, "users", this.state.currentUser.uid);
-                onSnapshot(userRef, (doc) => {
-                    this.state.userProfile = doc.data();
-                    this.ui.balanceDisplay.textContent = `R$ ${this.state.userProfile.balance.toFixed(2)}`;
-                });
-            }
-
-            setupViews() {
-                if (this.state.currentUser.uid === this.config.adminUID) {
-                    this.ui.adminView.classList.remove('hidden');
-                    this.ui.userView.classList.add('hidden');
-                    this.ui.lotteryAdminPanel.classList.remove('hidden');
-                } else {
-                    this.ui.adminView.classList.add('hidden');
-                    this.ui.userView.classList.remove('hidden');
-                    this.ui.lotteryAdminPanel.classList.add('hidden');
-                }
-            }
-
-            showModal(modalId) {
-                document.getElementById(modalId).classList.remove('hidden');
-                document.getElementById(modalId).classList.add('flex');
-            }
-
-            hideModal(modalId) {
-                document.getElementById(modalId).classList.add('hidden');
-                document.getElementById(modalId).classList.remove('flex');
-            }
-
-            showQrCode() {
-                this.ui.qrCodeContainer.innerHTML = "";
-                new QRCode(this.ui.qrCodeContainer, {
-                    text: this.state.currentUser.uid,
-                    width: 200,
-                    height: 200,
-                });
-                this.showModal('qr-code-modal');
-            }
-
-            startScanner() {
-                this.showModal('scanner-modal');
-                this.html5QrCode = new Html5Qrcode("reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                this.html5QrCode.start({ facingMode: "environment" }, config, 
-                    (decodedText) => this.onScanSuccess(decodedText),
-                    (errorMessage) => {}
-                );
-            }
-
-            async stopScanner() {
-                if (this.html5QrCode) {
+        // --- CÓDIGO COMPLETO DAS FUNÇÕES LÓGICAS (para garantir que nada falte) ---
+        App.setupAuthListener = function() {
+            this.createAuthUI();
+            setPersistence(this.services.auth, browserLocalPersistence);
+            onAuthStateChanged(this.services.auth, async (user) => {
+                if (this.state.unsubscribeUser) this.state.unsubscribeUser();
+                if (this.state.unsubscribeProducts) this.state.unsubscribeProducts();
+                if (user) {
+                    this.state.currentUser = user;
+                    this.navigateTo('data-loading-screen');
                     try {
-                        await this.html5QrCode.stop();
-                        this.html5QrCode.clear();
-                    } catch (err) {
-                        console.error("Erro ao parar o scanner:", err);
-                    }
-                }
-                this.hideModal('scanner-modal');
-            }
-
-            async onScanSuccess(customerId) {
-                await this.stopScanner();
-                const userRef = doc(this.services.db, "users", customerId);
-                const userSnap = await getDoc(userRef);
-
-                if (userSnap.exists()) {
-                    this.state.scannedCustomer = { id: customerId, ...userSnap.data() };
-                    this.ui.customerName.textContent = this.state.scannedCustomer.name;
-                    this.ui.customerBalance.textContent = `R$ ${this.state.scannedCustomer.balance.toFixed(2)}`;
-                    this.updateTotal();
-                    this.showModal('purchase-modal');
+                        const hasRole = await this.loadInitialData(user);
+                        if (hasRole) {
+                            this.navigateTo(this.state.userData.role === 'vendor' ? 'vendor-dashboard-screen' : 'client-dashboard-screen');
+                        } else {
+                            this.navigateTo('role-selection-screen');
+                        }
+                    } catch (error) { this.showModal('generic-modal', { html: `<h3>Erro Crítico</h3><p>${error.message}</p><button onclick="window.App.services.auth.signOut()" class="w-full mt-4 bg-red-600 text-white p-2 rounded-lg">Sair</button>`}); }
                 } else {
-                    alert("Cliente não encontrado!");
+                    this.state.currentUser = null; this.state.userData = null; this.navigateTo('auth-screen');
                 }
+            });
+        };
+        App.loadInitialData = async function(user) {
+            const userDocRef = doc(this.services.db, "users", user.uid);
+            let userDoc = await getDoc(userDocRef);
+            if (!userDoc.exists()) {
+                const newUserDoc = { email: user.email, balance: 0, paymentCode: Math.floor(100000 + Math.random() * 900000).toString(), role: null };
+                await setDoc(userDocRef, newUserDoc);
+                userDoc = await getDoc(userDocRef);
             }
-            
-            updateTotal() {
-                let total = 0;
-                document.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
-                    total += parseFloat(checkbox.value);
+            this.listenToVendorProducts(user.uid);
+            return new Promise((resolve) => {
+                this.state.unsubscribeUser = onSnapshot(userDocRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        this.state.userData = { id: snapshot.id, ...snapshot.data() };
+                        document.getElementById('client-balance-display').textContent = `R$ ${this.state.userData.balance.toFixed(2).replace('.', ',')}`;
+                        document.getElementById('vendor-balance-display').textContent = `R$ ${this.state.userData.balance.toFixed(2).replace('.', ',')}`;
+                        resolve(!!this.state.userData.role);
+                    }
                 });
-                this.ui.totalPrice.textContent = `R$ ${total.toFixed(2)}`;
-            }
+            });
+        };
+        App.setupEventListeners = function() {
+            const self = this;
+            document.addEventListener('click', (e) => {
+                const target = e.target.closest('button');
+                if (!target) return;
+                const targetId = target.id;
+                const actions = {
+                    'generic-modal-close-button': () => self.closeModal('generic-modal'),
+                    'close-products-modal-button': () => self.closeModal('manage-products-modal'),
+                    'close-card-manager-modal-button': () => self.closeModal('card-manager-modal'),
+                    'close-recharge-modal-button': () => self.closeModal('recharge-modal'),
+                    'close-history-modal-button': () => self.closeModal('history-modal'),
+                    'close-code-generator-modal-button': () => self.closeModal('code-generator-modal'),
+                    'qr-reader-close': () => self.stopQrScanner(),
+                    'client-logout-button': () => self.services.auth.signOut(),
+                    'vendor-logout-button': () => self.services.auth.signOut(),
+                    'select-role-client': () => self.setUserRole('client'),
+                    'select-role-vendor': () => self.setUserRole('vendor'),
+                    'client-back-to-mode-selection': () => self.navigateTo('role-selection-screen'),
+                    'vendor-back-to-mode-selection': () => self.navigateTo('role-selection-screen'),
+                    'show-my-code-button': () => self.showClientCodes(),
+                    'pay-nfc-button': () => self.clientPayWithNFC(),
+                    'show-history-button': () => self.showHistory(),
+                    'manage-products-button': () => self.showModal('manage-products-modal'),
+                    'checkout-button': () => { const total = self.state.cart.reduce((sum, item) => sum + item.price, 0); document.getElementById('payment-total-display').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`; self.navigateTo('vendor-payment-screen'); },
+                    'cancel-payment-button': () => { self.navigateTo('vendor-dashboard-screen'); },
+                    'open-recharge-modal-button': () => self.openRechargeModal(),
+                    'open-card-manager-button': () => self.openCardManagerModal(),
+                    'open-code-generator-button': () => self.openCodeGeneratorModal(),
+                    'read-card-button': () => self.readCardForLinking(),
+                    'link-card-button': () => self.linkCardToUser(),
+                    'receive-via-nfc-button': () => self.vendorReceiveWithNFC(),
+                    'receive-via-qr-button': () => self.vendorReceiveWithQR(),
+                    'redeem-code-button': () => self.navigateTo('redeem-code-screen'),
+                    'redeem-code-back-button': () => self.navigateTo('client-dashboard-screen'),
+                    'import-qr-button': () => document.getElementById('qr-file-input').click(),
+                };
+                if (actions[targetId]) actions[targetId]();
+            });
+            document.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formId = e.target.id;
+                 const actions = {
+                    'add-product-form': () => self.addProduct(e),
+                    'search-user-for-recharge-form': () => self.searchUserForRecharge(e),
+                    'recharge-form': () => self.executeRecharge(e),
+                    'search-user-for-card-form': () => self.searchUserForCard(e),
+                    'receive-via-code-form': () => self.vendorReceiveWithCode(e),
+                    'generate-code-form': () => self.generateRechargeCode(e),
+                    'redeem-code-form': () => self.redeemRechargeCode(e),
+                };
+                if (actions[formId]) actions[formId]();
+            });
+            document.getElementById('qr-file-input').addEventListener('change', (e) => this.handleQRFileSelect(e));
+        };
+        App.createAuthUI = function() {
+            const authScreen = document.getElementById('auth-screen');
+            authScreen.innerHTML = `<div class="text-center mb-8"><h1 class="text-4xl font-extrabold text-white">Cashless<span class="text-[var(--brand-orange)]">Pay</span></h1><p class="text-gray-300 mt-2">Sua carteira digital, reinventada.</p></div><div id="login-view"><h2 class="text-2xl font-semibold mb-4 text-center text-white">Acessar Conta</h2><form id="login-form" class="space-y-4"><input type="email" id="login-email" placeholder="Seu e-mail" class="w-full px-4 py-3 border-2 border-gray-600 bg-gray-700 text-white rounded-lg" required><input type="password" id="login-password" placeholder="Sua senha" class="w-full px-4 py-3 border-2 border-gray-600 bg-gray-700 text-white rounded-lg" required><button type="submit" class="w-full font-bold py-3 rounded-lg btn btn-primary">Entrar</button></form><p class="text-center mt-4 text-gray-300">Não tem uma conta? <a href="#" id="show-register" class="text-[var(--brand-orange)] font-semibold">Cadastre-se</a></p></div><div id="register-view" style="display: none;"><h2 class="text-2xl font-semibold mb-4 text-center text-white">Criar Conta</h2><form id="register-form" class="space-y-4"><input type="email" id="register-email" placeholder="Seu e-mail" class="w-full px-4 py-3 border-2 border-gray-600 bg-gray-700 text-white rounded-lg" required><input type="password" id="register-password" placeholder="Crie uma senha" class="w-full px-4 py-3 border-2 border-gray-600 bg-gray-700 text-white rounded-lg" required><button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-lg btn">Criar Conta</button></form><p class="text-center mt-4 text-gray-300">Já tem uma conta? <a href="#" id="show-login" class="text-[var(--brand-orange)] font-semibold">Faça Login</a></p></div>`;
+            document.getElementById('show-register').addEventListener('click', e => { e.preventDefault(); document.getElementById('login-view').style.display = 'none'; document.getElementById('register-view').style.display = 'block'; });
+            document.getElementById('show-login').addEventListener('click', e => { e.preventDefault(); document.getElementById('register-view').style.display = 'none'; document.getElementById('login-view').style.display = 'block'; });
+            document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
+            document.getElementById('register-form').addEventListener('submit', (e) => this.handleRegister(e));
+        };
+        App.handleLogin = async function(e) { try { await signInWithEmailAndPassword(this.services.auth, e.target.elements['login-email'].value, e.target.elements['login-password'].value); } catch (error) { this.showModal('generic-modal', { html: `<h3 class='font-bold text-red-600'>Erro de Login</h3><p>${error.message}</p>` }); } };
+        App.handleRegister = async function(e) { try { await createUserWithEmailAndPassword(this.services.auth, e.target.elements['register-email'].value, e.target.elements['register-password'].value); } catch (error) { this.showModal('generic-modal', { html: `<h3 class='font-bold text-red-600'>Erro de Cadastro</h3><p>${error.message}</p>` }); } };
+        App.setUserRole = async function(role) { const userDocRef = doc(this.services.db, "users", this.state.currentUser.uid); await updateDoc(userDocRef, { role: role }); this.state.userData.role = role; this.navigateTo(role === 'vendor' ? 'vendor-dashboard-screen' : 'client-dashboard-screen'); };
+        App.showClientCodes = function() { if (!this.state.userData) return; const qrContent = JSON.stringify({ userId: this.state.userData.id }); this.showModal('generic-modal', { html: `<h3 class='font-bold text-lg mb-2 text-center'>Meu Código</h3><p class='text-sm text-gray-600 mb-4 text-center'>Apresente para o vendedor.</p><div id="qrcode-display" class="flex justify-center my-4"></div><p class="text-center text-gray-500">Ou use o código abaixo:</p><p class="text-3xl font-bold tracking-widest text-center text-indigo-600 bg-gray-100 p-3 rounded-lg">${this.state.userData.paymentCode}</p>` }); new QRCode(document.getElementById("qrcode-display"), { text: qrContent, width: 200, height: 200 }); };
+        App.addProduct = async function(e) { const name = e.target.elements['product-name'].value; const price = parseFloat(e.target.elements['product-price'].value); await addDoc(collection(this.services.db, "users", this.state.currentUser.uid, "products"), { name, price }); e.target.reset(); };
+        App.openRechargeModal = function() { this.state.rechargeState = { foundUser: null }; this.updateRechargeUI(); this.showModal('recharge-modal'); };
+        App.searchUserForRecharge = async function(e) { const email = document.getElementById('search-user-for-recharge-email').value; const q = query(collection(this.services.db, "users"), where("email", "==", email)); const snapshot = await getDocs(q); if (snapshot.empty) { this.state.rechargeState.foundUser = null; this.showModal('generic-modal', {html: '<h3>Usuário não encontrado</h3>'}); } else { const userDoc = snapshot.docs[0]; this.state.rechargeState.foundUser = { id: userDoc.id, ...userDoc.data() }; } this.updateRechargeUI(); };
+        App.executeRecharge = async function(e) { if (!this.state.rechargeState.foundUser) return this.showModal('generic-modal', {html: '<h3>Nenhum usuário selecionado</h3>'}); const amountInput = document.getElementById('recharge-amount'); const amount = parseFloat(amountInput.value); if (isNaN(amount) || amount <= 0) return this.showModal('generic-modal', {html: '<h3>Valor de recarga inválido</h3>'}); try { await updateDoc(doc(this.services.db, "users", this.state.rechargeState.foundUser.id), { balance: increment(amount) }); this.showModal('generic-modal', {html: `<h3>Sucesso!</h3><p>Recarga de R$ ${amount.toFixed(2)} realizada para ${this.state.rechargeState.foundUser.email}!</p>`}); amountInput.value = ''; this.state.rechargeState.foundUser.balance += amount; this.updateRechargeUI(); } catch (error) { this.showModal('generic-modal', {html: `<h3>Erro na Recarga</h3><p>${error.message}</p>`}); } };
+        App.updateRechargeUI = function() { const userInfoEl = document.getElementById('found-user-for-recharge-info'); const rechargeActionEl = document.getElementById('recharge-action-div'); if (this.state.rechargeState.foundUser) { userInfoEl.innerHTML = `Usuário: <strong>${this.state.rechargeState.foundUser.email}</strong><br>Saldo Atual: R$ ${this.state.rechargeState.foundUser.balance.toFixed(2)}`; rechargeActionEl.classList.remove('hidden'); } else { userInfoEl.innerHTML = ''; rechargeActionEl.classList.add('hidden'); } };
+        App.openCardManagerModal = function() { this.state.cardManagerState = { cardId: null, foundUser: null }; this.updateCardManagerUI(); this.showModal('card-manager-modal'); };
+        App.searchUserForCard = async function(e) { const email = document.getElementById('search-user-for-card-email').value; const q = query(collection(this.services.db, "users"), where("email", "==", email)); const snapshot = await getDocs(q); if (snapshot.empty) { this.state.cardManagerState.foundUser = null; this.showModal('generic-modal', {html: '<h3>Usuário não encontrado</h3>'}); } else { const userDoc = snapshot.docs[0]; this.state.cardManagerState.foundUser = { id: userDoc.id, ...userDoc.data() }; } this.updateCardManagerUI(); };
+        App.readCardForLinking = async function() { if (!("NDEFReader" in window)) return this.handleNFCError(new DOMException("NFC não suportado.", "NotSupportedError")); try { const ndef = new NDEFReader(); await ndef.scan(); this.showModal('generic-modal', {html: `<h3>Aproxime o Cartão</h3><p>Aproxime um cartão ou tag NFC para ler seu ID.</p>`}); ndef.addEventListener("reading", ({ serialNumber }) => { if (serialNumber) { ndef.stop(); this.state.cardManagerState.cardId = serialNumber; this.closeModal('generic-modal'); this.updateCardManagerUI(); } }); } catch (error) { this.handleNFCError(error); } };
+        App.linkCardToUser = async function() { if (!this.state.cardManagerState.cardId || !this.state.cardManagerState.foundUser) return; const cardRef = doc(this.services.db, "nfc_cards", this.state.cardManagerState.cardId); try { await setDoc(cardRef, { userId: this.state.cardManagerState.foundUser.id, userEmail: this.state.cardManagerState.foundUser.email, registeredAt: new Date(), registeredBy: this.state.currentUser.uid }); this.showModal('generic-modal', {html: `<h3>Sucesso!</h3><p>Cartão vinculado ao usuário ${this.state.cardManagerState.foundUser.email}.</p>`}); this.closeModal('card-manager-modal'); } catch (error) { this.showModal('generic-modal', {html: `<h3>Erro ao Vincular</h3><p>${error.message}</p>`}); } };
+        App.updateCardManagerUI = function() { document.getElementById('scanned-card-id').textContent = this.state.cardManagerState.cardId || 'Nenhum'; const userInfoEl = document.getElementById('found-user-for-card-info'); if (this.state.cardManagerState.foundUser) { userInfoEl.innerHTML = `Usuário: <strong>${this.state.cardManagerState.foundUser.email}</strong>`; } else { userInfoEl.innerHTML = ''; } document.getElementById('link-card-button').disabled = !(this.state.cardManagerState.cardId && this.state.cardManagerState.foundUser); };
+        App.openCodeGeneratorModal = function() { document.getElementById('generated-code-display').textContent = '...'; this.showModal('code-generator-modal'); };
+        App.generateRechargeCode = async function(e) { const value = parseFloat(e.target.elements['generate-code-value'].value); if (isNaN(value) || value <= 0) return this.showModal('generic-modal', {html: '<h3>Valor inválido</h3>'}); try { const codeRef = await addDoc(collection(this.services.db, "recharge_codes"), { value: value, createdAt: serverTimestamp(), createdBy: this.state.currentUser.uid, used: false }); document.getElementById('generated-code-display').textContent = codeRef.id; e.target.reset(); } catch (error) { this.showModal('generic-modal', {html: `<h3>Erro ao Gerar Código</h3><p>${error.message}</p>`}); } };
+        App.redeemRechargeCode = async function(e) { const code = e.target.elements['recharge-code-input'].value; if (!code) return; const codeRef = doc(this.services.db, "recharge_codes", code); try { await runTransaction(this.services.db, async (transaction) => { const codeDoc = await transaction.get(codeRef); if (!codeDoc.exists() || codeDoc.data().used) { throw new Error("Código inválido ou já utilizado."); } const value = codeDoc.data().value; const userRef = doc(this.services.db, "users", this.state.currentUser.uid); transaction.update(userRef, { balance: increment(value) }); transaction.update(codeRef, { used: true, usedBy: this.state.currentUser.uid, usedAt: serverTimestamp() }); }); this.showModal('generic-modal', {html: `<h3>Sucesso!</h3><p>Recarga realizada com sucesso.</p>`}); this.navigateTo('client-dashboard-screen'); } catch (error) { this.showModal('generic-modal', {html: `<h3>Erro na Recarga</h3><p>${error.message}</p>`}); } };
+        App.listenToVendorProducts = function(uid) {
+            const productsRef = collection(this.services.db, "users", uid, "products");
+            this.state.unsubscribeProducts = onSnapshot(productsRef, (snapshot) => {
+                const productList = document.getElementById('vendor-product-list');
+                const managementList = document.getElementById('products-management-list');
+                productList.innerHTML = '';
+                managementList.innerHTML = '';
+                if (snapshot.empty) { productList.innerHTML = '<p class="text-gray-500 col-span-full text-center">Nenhum produto cadastrado.</p>'; }
+                snapshot.docs.sort((a,b) => a.data().name.localeCompare(b.data().name)).forEach(docSnap => {
+                    const product = { id: docSnap.id, ...docSnap.data() };
+                    const pEl = document.createElement('div');
+                    pEl.className = 'p-3 rounded-2xl text-center cursor-pointer bg-white shadow-sm hover:shadow-md transition-shadow';
+                    pEl.innerHTML = `<h4 class="font-semibold">${product.name}</h4><p class="text-sm text-green-600">R$ ${product.price.toFixed(2)}</p>`;
+                    pEl.onclick = () => this.addToCart(product);
+                    productList.appendChild(pEl);
+                    const mEl = document.createElement('div');
+                    mEl.className = 'flex justify-between items-center p-2 border-b';
+                    mEl.innerHTML = `<span>${product.name} (R$ ${product.price.toFixed(2)})</span><button data-id="${product.id}" class="text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>`;
+                    managementList.appendChild(mEl);
+                });
+                managementList.querySelectorAll('button').forEach(btn => { btn.onclick = async () => { if (confirm(`Tem certeza que deseja remover este produto?`)) { await deleteDoc(doc(this.services.db, "users", this.state.currentUser.uid, "products", btn.dataset.id)); } } });
+            });
+        };
+        App.addToCart = function(product) { this.state.cart.push(product); this.renderCart(); };
+        App.removeFromCart = function(index) { this.state.cart.splice(index, 1); this.renderCart(); };
+        App.renderCart = function() {
+            const cartItemsEl = document.getElementById('cart-items');
+            const cartTotalEl = document.getElementById('cart-total');
+            const checkoutBtn = document.getElementById('checkout-button');
+            cartItemsEl.innerHTML = '';
+            if (this.state.cart.length === 0) { cartItemsEl.innerHTML = '<p class="text-gray-500 text-center mt-8">Carrinho vazio.</p>'; checkoutBtn.disabled = true; cartTotalEl.textContent = 'R$ 0,00'; return; }
+            let total = 0;
+            this.state.cart.forEach((item, index) => { total += item.price; const itemEl = document.createElement('div'); itemEl.className = 'flex justify-between items-center bg-white p-2 rounded-lg'; itemEl.innerHTML = `<div><p>${item.name}</p><p class="text-xs text-gray-500">R$ ${item.price.toFixed(2)}</p></div><button data-index="${index}" class="text-red-500 hover:text-red-700 font-semibold text-lg">&times;</button>`; cartItemsEl.appendChild(itemEl); });
+            cartItemsEl.querySelectorAll('button').forEach(btn => { btn.onclick = () => this.removeFromCart(parseInt(btn.dataset.index)); });
+            cartTotalEl.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+            checkoutBtn.disabled = false;
+        };
+        App.handleNFCError = function(error) { let message = `<h3 class='font-bold text-red-600'>Erro NFC</h3>`; if (error.name === 'AbortError') { return; } else if (error.name === 'NotAllowedError') { message += `<p>Permissão para usar NFC foi negada.</p>`; } else if (error.name === 'NotSupportedError') { message += `<p>NFC não é suportado neste dispositivo.</p>`; } else { message += `<p>Ocorreu um erro: ${error.message}</p>`; } this.showModal('generic-modal', { html: message }); };
+        App.clientPayWithNFC = async function() { if (!("NDEFReader" in window)) return this.handleNFCError(new DOMException("NFC não suportado.", "NotSupportedError")); try { const ndef = new NDEFReader(); this.showModal('generic-modal', { html: `<h3>Aproxime para Pagar</h3><p>Aproxime seu celular da maquininha.</p>` }); await ndef.write({ records: [{ recordType: "text", data: JSON.stringify({ userId: this.state.currentUser.uid }) }] }); this.showModal('generic-modal', { html: `<h3>Pagamento Enviado!</h3><p>Aguarde a confirmação do vendedor.</p>` }); } catch (error) { this.handleNFCError(error); } };
+        App.vendorReceiveWithNFC = async function() { if (!("NDEFReader" in window)) return this.handleNFCError(new DOMException("NFC não suportado.", "NotSupportedError")); try { const ndef = new NDEFReader(); this.state.nfcAbortController = new AbortController(); this.showModal('generic-modal', { html: `<h3>Aguardando Aproximação</h3><p>Aproxime o cartão ou celular do cliente.</p>` }); ndef.addEventListener("reading", async (event) => { if (this.state.nfcAbortController.signal.aborted) return; this.state.nfcAbortController.abort(); if (event.serialNumber) { const cardDoc = await getDoc(doc(this.services.db, "nfc_cards", event.serialNumber)); if (cardDoc.exists()) { return this.handleTransaction(cardDoc.data().userId); } else { return this.showModal('generic-modal', { html: `<h3>Cartão não Cadastrado</h3>` }); } } for (const record of event.message.records) { try { const data = JSON.parse(new TextDecoder().decode(record.data)); if (data.userId) { return this.handleTransaction(data.userId); } } catch (e) { continue; } } this.showModal('generic-modal', { html: `<h3>Nenhum dado válido encontrado</h3>` }); }, { signal: this.state.nfcAbortController.signal }); await ndef.scan({ signal: this.state.nfcAbortController.signal }); } catch (error) { this.handleNFCError(error); } };
+        App.vendorReceiveWithQR = function() { const html5QrCode = new Html5Qrcode("qr-reader"); this.showModal('qr-reader-modal'); html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } }, (decodedText) => { this.stopQrScanner(html5QrCode); try { const customerInfo = JSON.parse(decodedText); if (!customerInfo.userId) throw new Error("QR Code inválido."); this.handleTransaction(customerInfo.userId); } catch (e) { this.showModal('generic-modal', { html: `<h3 class='font-bold text-red-600'>QR Code Inválido</h3>` }); } }, (error) => {} ).catch(err => { this.showModal('generic-modal', { html: `<h3 class='font-bold text-red-600'>Erro na Câmera</h3>` }); }); };
+        App.stopQrScanner = function(scannerInstance) { if (scannerInstance && scannerInstance.isScanning) { scannerInstance.stop().catch(err => {}); } this.closeModal('qr-reader-modal'); };
+        App.vendorReceiveWithCode = async function(e) { const code = e.target.elements['receive-code-input'].value; const q = query(collection(this.services.db, "users"), where("paymentCode", "==", code)); const snapshot = await getDocs(q); if (snapshot.empty) { return this.showModal('generic-modal', { html: `<h3 class='font-bold text-red-600'>Código não encontrado</h3>` }); } this.handleTransaction(snapshot.docs[0].id); };
+        App.vendorImportQR = async function(file) { if (!file) return; const html5QrCode = new Html5Qrcode("qr-reader", true); try { const decodedText = await html5QrCode.scanFile(file, false); const customerInfo = JSON.parse(decodedText); if (!customerInfo.userId) throw new Error("QR Code inválido."); this.handleTransaction(customerInfo.userId); } catch (e) { this.showModal('generic-modal', { html: `<h3 class='font-bold text-red-600'>QR Code Inválido</h3><p>Não foi possível ler o QR Code do arquivo selecionado.</p>` }); } };
+        App.handleQRFileSelect = function(e) { const file = e.target.files[0]; if (file) { this.vendorImportQR(file); } e.target.value = ''; };
+        App.handleTransaction = async function(customerId) {
+            const total = this.state.cart.reduce((sum, item) => sum + item.price, 0);
+            if (total <= 0) return;
+            if (this.state.currentUser.uid === customerId) { return this.showModal('generic-modal', { html: `<h3 class='font-bold text-red-600'>Ação Inválida</h3><p>Você não pode vender para si mesmo.</p>` }); }
+            try {
+                await runTransaction(this.services.db, async (transaction) => {
+                    const customerRef = doc(this.services.db, "users", customerId);
+                    const vendorRef = doc(this.services.db, "users", this.state.currentUser.uid);
+                    const customerDoc = await transaction.get(customerRef);
+                    if (!customerDoc.exists()) throw "Cliente não encontrado.";
+                    if (customerDoc.data().balance < total) throw "Saldo insuficiente.";
+                    
+                    transaction.update(customerRef, { balance: increment(-total) });
+                    transaction.update(vendorRef, { balance: increment(total) });
 
-            async processPurchase() {
-                const total = parseFloat(this.ui.totalPrice.textContent.replace('R$ ', ''));
-                if (total <= 0) {
-                    alert("Selecione pelo menos um item.");
-                    return;
-                }
-                if (this.state.scannedCustomer.balance < total) {
-                    alert("Saldo insuficiente!");
-                    return;
-                }
-
-                const newBalance = this.state.scannedCustomer.balance - total;
-                const customerRef = doc(this.services.db, "users", this.state.scannedCustomer.id);
-                
-                const items = Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => ({
-                    name: cb.dataset.name,
-                    price: parseFloat(cb.value)
-                }));
-
-                try {
-                    await updateDoc(customerRef, { balance: newBalance });
-                    await addDoc(collection(this.services.db, "transactions"), {
-                        customerId: this.state.scannedCustomer.id,
+                    const transactionRef = doc(collection(this.services.db, "transactions"));
+                    transaction.set(transactionRef, {
                         vendorId: this.state.currentUser.uid,
-                        items: items,
+                        customerId: customerId,
+                        items: this.state.cart,
                         total: total,
                         createdAt: serverTimestamp()
                     });
-
-                    alert("Compra realizada com sucesso!");
-                    this.hideModal('purchase-modal');
-                    document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = false);
-                } catch (error) {
-                    console.error("Erro ao processar compra:", error);
-                    alert("Ocorreu um erro. Tente novamente.");
-                }
-            }
-
-            async showHistory() {
-                this.showModal('history-modal');
-                const historyListEl = document.getElementById('history-list');
-                historyListEl.innerHTML = '<p class="text-center text-gray-400">Carregando histórico...</p>';
-                
-                const q = query(collection(this.services.db, "transactions"), where("customerId", "==", this.state.currentUser.uid), orderBy("createdAt", "desc"));
-                const snapshot = await getDocs(q);
-
-                if (snapshot.empty) {
-                    historyListEl.innerHTML = '<p class="text-center text-gray-500">Nenhuma compra encontrada.</p>';
-                    return;
-                }
-
-                historyListEl.innerHTML = '';
-                snapshot.forEach(doc => {
-                    const tx = doc.data();
-                    const date = tx.createdAt ? tx.createdAt.toDate().toLocaleString('pt-BR') : 'Data pendente';
-                    let itemsHtml = tx.items.map(item => `<li>${item.name} - R$ ${item.price.toFixed(2)}</li>`).join('');
-
-                    const txEl = document.createElement('div');
-                    txEl.className = 'p-3 border-b border-white/10';
-                    txEl.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold">R$ ${tx.total.toFixed(2)}</span>
-                            <span class="text-sm text-gray-400">${date}</span>
-                        </div>
-                        <ul class="text-sm text-gray-300 list-disc list-inside mt-1">
-                            ${itemsHtml}
-                        </ul>
-                    `;
-                    historyListEl.appendChild(txEl);
                 });
+                this.closeModal('generic-modal');
+                this.showModal('generic-modal', { html: `<h3 class='font-bold text-green-600 text-xl'>Pagamento Aprovado!</h3><p class='mt-2'>Venda de <strong>R$ ${total.toFixed(2)}</strong> concluída.</p>` });
+                this.state.cart = [];
+                this.renderCart();
+                this.navigateTo('vendor-dashboard-screen');
+            } catch (error) { 
+                this.showModal('generic-modal', { html: `<h3 class='font-bold text-red-600'>Pagamento Recusado</h3><p>${error.toString()}</p>` }); 
             }
+        };
+        App.showHistory = async function() {
+            const historyListEl = document.getElementById('history-list');
+            historyListEl.innerHTML = '<p class="text-center">Carregando histórico...</p>';
+            this.showModal('history-modal');
             
-            // --- MÉTODOS DA LOTERIA ---
+            const q = query(collection(this.services.db, "transactions"), where("customerId", "==", this.state.currentUser.uid), orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(q);
 
-            listenForLottery() {
-                const lotteryQuery = query(collection(this.services.db, "lotteries"), orderBy("createdAt", "desc"), limit(1));
-                onSnapshot(lotteryQuery, (snapshot) => {
-                    if (!snapshot.empty) {
-                        const lotteryData = snapshot.docs[0].data();
-                        lotteryData.id = snapshot.docs[0].id;
-                        this.state.activeLottery = lotteryData;
-                    } else {
-                        this.state.activeLottery = null;
-                    }
-                    this.renderLottery();
-                    if (this.state.currentUser.uid === this.config.adminUID) {
-                        this.renderLotteryAdminControls();
-                    }
-                });
+            if (snapshot.empty) {
+                historyListEl.innerHTML = '<p class="text-center text-gray-500">Nenhuma compra encontrada.</p>';
+                return;
             }
 
-            renderLottery() {
-                const lottery = this.state.activeLottery;
-                if (!lottery || !lottery.isActive) {
-                    this.ui.lotteryInfo.innerHTML = `
-                        <p class="text-gray-400">Nenhuma loteria ativa no momento.</p>
-                        ${lottery && lottery.winnerName ? `
-                        <div class="mt-4 pt-4 border-t border-white/10">
-                            <p class="text-sm">Último Ganhador:</p>
-                            <p class="font-bold text-lg text-amber-300">${lottery.winnerName}</p>
-                            <p class="text-xs text-gray-500">Prêmio: ${lottery.prize}</p>
-                        </div>
-                        ` : ''}
-                    `;
-                    return;
-                }
+            historyListEl.innerHTML = '';
+            snapshot.forEach(doc => {
+                const tx = doc.data();
+                const date = tx.createdAt ? tx.createdAt.toDate().toLocaleString('pt-BR') : 'Data pendente';
+                let itemsHtml = tx.items.map(item => `<li>${item.name} - R$ ${item.price.toFixed(2)}</li>`).join('');
 
-                const participantCount = lottery.participants?.length || 0;
-                const userHasJoined = lottery.participants?.includes(this.state.currentUser.uid);
-
-                this.ui.lotteryInfo.innerHTML = `
-                    <p class="text-lg">Prêmio:</p>
-                    <p class="text-3xl font-bold text-amber-300 mb-3">${lottery.prize}</p>
-                    <p class="text-sm text-gray-300 mb-4">${participantCount} participante(s)</p>
-                    <button id="join-lottery-btn" class="w-full py-2 px-4 rounded-lg font-semibold ${userHasJoined ? 'bg-green-600 cursor-not-allowed' : 'bg-amber-500 hover:bg-amber-600'}" ${userHasJoined ? 'disabled' : ''}>
-                        ${userHasJoined ? 'Você já está participando!' : 'Entrar na Loteria'}
-                    </button>
+                const txEl = document.createElement('div');
+                txEl.className = 'p-3 border-b border-white/10';
+                txEl.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold">R$ ${tx.total.toFixed(2)}</span>
+                        <span class="text-sm text-gray-400">${date}</span>
+                    </div>
+                    <ul class="text-sm text-gray-300 list-disc list-inside mt-1">
+                        ${itemsHtml}
+                    </ul>
                 `;
+                historyListEl.appendChild(txEl);
+            });
+        };
 
-                if (!userHasJoined) {
-                    document.getElementById('join-lottery-btn').addEventListener('click', () => this.joinLottery());
-                }
-            }
-            
-            renderLotteryAdminControls() {
-                const lottery = this.state.activeLottery;
-                if (lottery && lottery.isActive) {
-                    this.ui.lotteryAdminControls.innerHTML = `
-                        <button id="end-lottery-btn" class="w-full py-3 px-4 rounded-lg font-semibold bg-red-500 hover:bg-red-600">Sortear Ganhador e Encerrar</button>
-                    `;
-                    document.getElementById('end-lottery-btn').addEventListener('click', () => this.endLottery());
-                } else {
-                    this.ui.lotteryAdminControls.innerHTML = `
-                        <button id="start-lottery-btn" class="w-full py-3 px-4 rounded-lg font-semibold bg-green-500 hover:bg-green-600">Iniciar Nova Loteria</button>
-                    `;
-                    document.getElementById('start-lottery-btn').addEventListener('click', () => this.startLottery());
-                }
-            }
-
-            async joinLottery() {
-                if (!this.state.activeLottery || !this.state.activeLottery.isActive) {
-                    alert("A loteria não está mais ativa!");
-                    return;
-                }
-                const lotteryRef = doc(this.services.db, "lotteries", this.state.activeLottery.id);
-                try {
-                    await updateDoc(lotteryRef, {
-                        participants: arrayUnion(this.state.currentUser.uid)
-                    });
-                    alert("Você entrou na loteria! Boa sorte!");
-                } catch (error) {
-                    console.error("Erro ao entrar na loteria:", error);
-                    alert("Não foi possível entrar na loteria. Tente novamente.");
-                }
-            }
-
-            async startLottery() {
-                const prize = prompt("Qual é o prêmio para esta rodada da loteria?");
-                if (!prize) return;
-
-                try {
-                    await addDoc(collection(this.services.db, "lotteries"), {
-                        prize: prize,
-                        isActive: true,
-                        participants: [],
-                        winnerId: null,
-                        winnerName: null,
-                        createdAt: serverTimestamp()
-                    });
-                    alert("Nova loteria iniciada!");
-                } catch (error) {
-                    console.error("Erro ao iniciar loteria:", error);
-                    alert("Não foi possível iniciar a loteria.");
-                }
-            }
-
-            async endLottery() {
-                const lottery = this.state.activeLottery;
-                if (!lottery || !lottery.isActive) {
-                    alert("Nenhuma loteria ativa para encerrar.");
-                    return;
-                }
-                if (!lottery.participants || lottery.participants.length === 0) {
-                    alert("Ninguém participou desta loteria. Encerrando sem um ganhador.");
-                     const lotteryRef = doc(this.services.db, "lotteries", lottery.id);
-                     await updateDoc(lotteryRef, { isActive: false });
-                    return;
-                }
-
-                const winnerIndex = Math.floor(Math.random() * lottery.participants.length);
-                const winnerId = lottery.participants[winnerIndex];
-                
-                const userRef = doc(this.services.db, "users", winnerId);
-                const userSnap = await getDoc(userRef);
-                const winnerName = userSnap.exists() ? userSnap.data().name : "Nome Desconhecido";
-
-                const lotteryRef = doc(this.services.db, "lotteries", lottery.id);
-                try {
-                    await updateDoc(lotteryRef, {
-                        isActive: false,
-                        winnerId: winnerId,
-                        winnerName: winnerName
-                    });
-                    alert(`O ganhador é ${winnerName}!`);
-                } catch (error) {
-                    console.error("Erro ao encerrar a loteria:", error);
-                    alert("Não foi possível encerrar a loteria.");
-                }
-            }
-        }
-
-        window.App = new CashlessApp();
+        window.App = App;
         App.init();
 
     </script>
 </body>
 </html>
-
-
